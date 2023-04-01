@@ -4,25 +4,30 @@ const Song = require('../models/Song')
 
 const getSongs = async (req, res, next) => {
     // query parameter
+
+    const filter = {}
+    const options = {}
+
     if (Object.keys(req.query).length) {
         const {
             songTitle,
             artist,
-            genre            
+            genre,
+            limit,
+            sortByArtist          
         } = req.query
         
-        const filter = [];
-        if(songTitle) filter.push(songTitle)
-        if(artist) filter.push(artist)
-        if(genre) filter.push(genre)
+        if(songTitle) filter.songTitle = songTitle
+        if(artist) filter.artist = artist
+        if(genre) filter.genre = genre
 
-        for(const query of filter) {
-            console.log(`Searching song by ${query}`)
-        }
+        if(limit) options.limit = limit
+        if(sortByArtist) options.sort = {artist: sortByArtist === 'asc' ? 1 : -1}
+
     }
 
     try {
-        const songsPayload = await Song.find()
+        const songsPayload = await Song.find({}, filter, options)
 
         res
         .status(200)
@@ -107,11 +112,58 @@ const deleteSong = async (req, res, next) => {
 
 }
 
+const getSongRatings = async (req, res, next) => {
+    try {
+        const song = await Song.findById(req.params.songId)
+
+        res
+        .status(200)
+        .setHeader('Content-Type', 'application/json')
+        .json(song.ratings)
+    } catch (err) {
+        next(err)
+    }
+}
+
+const postSongRating = async (req, res, next) => {
+    try {
+       const song = await Song.findById(req.params.songId)
+       song.ratings.push(req.body)
+       await song.save()
+
+       res
+       .status(201)
+       .setHeader('Content-Type', 'application/json')
+       .json(song.ratings)
+    } catch (err) {
+        next(err)    
+    }
+}
+
+const deleteSongRatings = async (req, res, next) => {
+    try {
+        const song = await Song.findById(req.params.songId)
+        song.ratings = []
+        await song.save()
+
+        res
+        .status(201)
+        .setHeader('Content-Type', 'application/json')
+        .json({
+            message: `Ratings deleted for song with id: ${req.params.songId}`
+        })
+    } catch (err) {
+        next(err)
+    }
+}
 module.exports = {
     getSongs,
     postSong,
     deleteSongs,
     getSong,
     putSong,
-    deleteSong
+    deleteSong,
+    getSongRatings,
+    postSongRating,
+    deleteSongRatings
 }
