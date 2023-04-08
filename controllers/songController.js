@@ -156,6 +156,69 @@ const deleteSongRatings = async (req, res, next) => {
         next(err)
     }
 }
+
+const getSongRating = async (req, res, next) => {
+    try {
+        const song = await Song.findById(req.params.songId)
+        let rating = song.ratings.find(rating => (rating._id).equals(req.params.ratingId))
+        if(!rating) rating = {msg: `No rating found with id: ${req.params.ratingId}`}
+
+        res
+        .status(200)
+        .setHeader('Content-Type', 'application/json')
+        .json(rating)
+    } catch (err) {
+        next(err)
+    }
+}
+
+const updateSongRating = async (req, res, next) => {
+    try {
+        const song = await Song.findById(req.params.songId)
+        let rating = song.ratings.find(rating => (rating._id).equals(req.params.ratingId))
+        if(rating) {
+            const ratingIndex = song.ratings.indexOf(rating)
+            song.ratings.splice(ratingIndex, 1, req.body)
+            rating = req.body
+            await song.save()
+        }else{
+            rating = {msg: `No rating found with id: ${req.params.ratingId}`}
+        }
+
+        res
+        .status(200)
+        .setHeader('Content-Type', 'application/json')
+        .json(rating)
+
+    } catch (err) {
+        next(err)
+    }
+}
+
+const deleteSongRating = async (req, res, next) => {
+    try {
+        const song = await Song.findById(req.params.songId)
+        let rating = song.ratings.find(rating => (rating._id).equals(req.params.ratingId))
+
+        if(rating) {
+            const ratingIndex = song.ratings.indexOf(rating)
+            song.ratings.splice(ratingIndex, 1)
+            rating = { msg: `Successfully deleted rating: ${req.params.ratingId}` }
+            await song.save()
+        }else{
+            rating = { msg: `No rating found with id: ${req.params.ratingId}`}
+        }
+        res
+        .status(200)
+        .setHeader('Content-Type', 'application/json')
+        .json(rating)
+
+    } catch (err) {
+        next(err)
+    }
+}
+
+
 module.exports = {
     getSongs,
     postSong,
@@ -165,5 +228,8 @@ module.exports = {
     deleteSong,
     getSongRatings,
     postSongRating,
-    deleteSongRatings
+    deleteSongRatings,
+    getSongRating,
+    updateSongRating,
+    deleteSongRating
 }

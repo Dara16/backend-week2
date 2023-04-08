@@ -1,5 +1,6 @@
-const Artist = require("../models/Artist");
-const { options } = require("../routes/song");
+const Artist = require('../models/Artist');
+const path = require('path')
+
 
 // For '/artist' endpoints
 
@@ -112,11 +113,46 @@ const deleteArtist = async (req, res, next) => {
 
 }
 
+const postArtistImage = async (req, res, next) => {
+    try {
+        if(!req.files) {
+            const err = { msg: "Missing image!" }
+            next(err)
+        }
+
+        const file = req.files.file
+
+        if(!file.mimetype.startsWith('image')) {
+            const err = { msg: "Please upload image file type" }
+            next(err)
+        } 
+
+        if(file.size > process.env.MAX_FILE_SIZE) {
+            const err = { msg: `Image exceeds file size of ${process.env.MAX_FILE_SIZE}` }
+            next(err)
+        }
+        file.name = `photo_${req.params.artistId}${path.parse(file.name).ext}`
+        const filePath = process.env.FILE_UPLOAD_PATH + file.name
+        
+        file.mv(filePath, async (err)  => {
+            await Artist.findByIdAndUpdate(req.params.artistId), { image: file.name }
+   
+            res
+            .status(200)
+            .setHeader('Content-Type', 'application/json')
+            .json({ msg: "Image uploaded" })
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
 module.exports = {
     getArtists,
     postArtist,
     deleteArtists,
     getArtist,
     putArtist,
-    deleteArtist
+    deleteArtist,
+    postArtistImage
 }

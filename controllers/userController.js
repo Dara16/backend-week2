@@ -41,11 +41,8 @@ const getUsers = async (req, res, next) => {
 const postUser = async (req, res, next) => {
     try {
         const user = await User.create(req.body)
+        sendTokenResponse(user, 201, res)
 
-        res
-        .status(201)
-        .setHeader('Content-Type', 'application/json')
-        .json(user)
     } catch (err) {
         next(err)
     }
@@ -108,6 +105,20 @@ const deleteUser = async (req, res, next) => {
         next(err)
     }
 
+}
+
+const sendTokenResponse = (user, statusCode, res) => {
+    const token = user.getSignedJwtToken()
+
+    const options = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        httpOnly: true
+    }
+    
+    res
+    .status(statusCode)
+    .cookie('token', token, options)
+    .json(token)
 }
 
 module.exports = {
