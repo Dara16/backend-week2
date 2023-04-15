@@ -121,11 +121,32 @@ const sendTokenResponse = (user, statusCode, res) => {
     .json(token)
 }
 
+const login = async (req, res, next) => {
+    const{
+        email,
+        password
+    } = req.body
+
+    if(!email || !password) throw new Error("Please provide an email and password")
+
+    const user = await User.findOne({ email }).select('+password')
+
+    if(!user) throw new Error("Invalid credentials")
+
+    const isMatch = await user.matchPassword(password)
+
+    if(!isMatch) throw new Error("Invalid credentials")
+
+    sendTokenResponse(user, 200, res)
+
+}
+
 module.exports = {
     getUsers,
     postUser,
     deleteUsers,
     getUser,
     putUser,
-    deleteUser
+    deleteUser,
+    login
 }
